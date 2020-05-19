@@ -4,13 +4,14 @@ services:
   monggodb:
     image: mongo:latest
     environment:
+      MONGO_HOST: localhost
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 1234
       MONGO_INITDB_DATABASE: consultationChatbot
     ports:
       - 27017:27017
     volumes:
-      - mongodb_data_container:/data/db
+      - ./Mongodb/data:/data/db
 
   app:
     depends_on:
@@ -31,7 +32,8 @@ services:
   client:
       build:
         dockerfile: Dockerfile
-        ontext: ./client
+        ontext: ./client.
+      restart: unless-stopped
       volumes:
         - /app/node_modules
         - ./client:/app
@@ -65,6 +67,3 @@ services:
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; d$ 
 
 
-
-volumes:
-  mongodb_data_container:
