@@ -1,0 +1,21 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t jangdonghyeon/node-ali-chatbot -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true jangdonghyeon/node-ali-chatbot npm run test
+
+after_success:
+    - docker build -t jangdonghyeon/ali-client ./client
+    - docker build -t jangdonghyeon/ali-nginx ./nginx
+    - docker build -t jangdonghyeon/ali-server  ./server
+
+
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    - docker push jangdonghyeon/ali-client
+    - docker push jangdonghyeon/ali-nginx
+    - docker push jangdonghyeon/ali-server
+
