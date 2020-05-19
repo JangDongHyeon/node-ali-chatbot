@@ -1,0 +1,70 @@
+version: '3'
+services:
+
+  monggodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 1234
+      MONGO_INITDB_DATABASE: consultationChatbot
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
+  app:
+    depends_on:
+      - monggodb
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    container_name: app
+    restart: unless-stopped
+    environment:
+      - PORT=8891
+      - MONGO_URL=mongodb://localhost:27017/consultationChatbot
+      - JWT_SECRET=sdfksdfo23o5054024ksdf
+
+  client:
+      build:
+        dockerfile: Dockerfile
+        ontext: ./client
+      volumes:
+        - /app/node_modules
+        - ./client:/app
+      environment:
+        - REACT_APP_API_URL=https://chatbot.neoali.com/api/api  
+        - REACT_APP_SOCKET_URL=https://chatbot.neoali.com/api
+        - GENERATE_SOURCEMAP=false
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1$    
+
+  nginx:
+    depends_on:
+      - api
+      - client
+    build:
+      dockerfile: Dockerfile
+      context: ./nginx
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    ports:
+      - "80:80"
+      - "443:443"
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; d$ 
+
+
+
+volumes:
+  mongodb_data_container:
